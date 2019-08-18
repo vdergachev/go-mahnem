@@ -28,7 +28,7 @@ type WebClient struct {
 type Mahneclientlient interface {
 	init() error
 	login() error
-	profile() error
+	profile(string) error
 	logout() error
 }
 
@@ -119,9 +119,13 @@ func (wc WebClient) login() error {
 	}
 
 	defer response.Body.Close()
-
 	fmt.Println(" success [OK]")
+
 	dumpResponse("login.html", response.Body)
+
+	if response.StatusCode != 302 {
+		return fmt.Errorf("Login status code is %d", response.StatusCode)
+	}
 
 	return nil
 }
@@ -140,6 +144,10 @@ func (wc WebClient) logout() error {
 	}
 	defer response.Body.Close()
 
+	if response.StatusCode != 302 {
+		return fmt.Errorf("Logout status code is %d", response.StatusCode)
+	}
+
 	fmt.Println(" success [OK]")
 
 	return nil
@@ -147,9 +155,13 @@ func (wc WebClient) logout() error {
 
 // Mahneclientlient :: profile
 // Returns true - own profile is available, auth is successful
-func (wc WebClient) profile() (bool, error) {
+func (wc WebClient) profile(username string) (bool, error) {
 
-	profileURL := wc.url(fmt.Sprintf("/web/%s", wc.Config.Login))
+	if len(username) == 0 {
+		username = wc.Config.Login
+	}
+
+	profileURL := wc.url(fmt.Sprintf("/web/%s", username))
 
 	fmt.Printf("Profile url: %s", profileURL)
 
@@ -161,6 +173,12 @@ func (wc WebClient) profile() (bool, error) {
 
 	fmt.Println(" success [OK]")
 	dumpResponse("profile.html", response.Body)
+
+	// TODO Read data to string and loook for '<table class=umenu' substring
+	//data, _ := ioutil.ReadAll(response.Body)
+	//if data == nil {
+	//	return false, nil
+	//}
 
 	return true, nil
 }
@@ -182,7 +200,7 @@ func main() {
 		log.Fatal("Login failed", err.Error())
 	}
 
-	v, err := client.profile()
+	v, err := client.profile("")
 	if err != nil {
 		log.Fatal("Profile fetch failed, error ", err.Error())
 	} else if !v {
