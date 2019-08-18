@@ -10,110 +10,188 @@ import (
 	"os"
 )
 
-// ResultDIR is place for downloaded html files
-var ResultDIR = "./result"
+// Configuration configuration
+type Configuration struct {
+	BaseURL    string
+	Login      string
+	Password   string
+	DumpFolder string
+}
 
+// WebClient is basic web client struct
+type WebClient struct {
+	Config *Configuration
+	client *http.Client
+}
+
+// Mahneclientlient defenition of web client
+type Mahneclientlient interface {
+	init() error
+	login() error
+	profile() error
+	logout() error
+}
+
+func defaultClient() *WebClient {
+
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	webClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Jar: jar,
+	}
+
+	return &WebClient{
+		Config: &Configuration{
+			Login:      os.Args[1],
+			Password:   os.Args[2],
+			BaseURL:    "http://mahnem.ru",
+			DumpFolder: "./result",
+		},
+		client: webClient,
+	}
+}
+
+// Mahneclientlient :: url
+func (wc WebClient) url(path string) string {
+	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
+}
+
+// Mahneclientlient :: initStorage
+func (wc WebClient) initStorage() error {
+
+	dir := wc.Config.DumpFolder
+
+	_, err := os.Stat(dir)
+	if !os.IsExist(err) {
+		err = os.RemoveAll(dir)
+		if err != nil {
+			return fmt.Errorf("Can't remove existing fs result storage %s", err.Error())
+		}
+	}
+
+	err = os.MkdirAll(dir, os.ModeDir)
+	if err != nil {
+		return fmt.Errorf("Can't init fs result storage")
+	}
+
+	err = os.Chdir(dir)
+	if err != nil {
+		return fmt.Errorf("Can't change working directory to %s", dir)
+	}
+
+	return nil
+}
+
+// Mahneclientlient :: init
+func (wc WebClient) init() error {
+
+	err := wc.initStorage()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return nil
+}
+
+// Mahneclientlient :: login
+// TODO :: We have to check that 302 been recieved and profile is available
+func (wc WebClient) login() error {
+
+	loginURL := wc.url("?module=login")
+	login := wc.Config.Login
+	passwd := wc.Config.Password
+
+	fmt.Printf("Login url: %s, username: %s, password: %s", loginURL, login, passwd)
+
+	form := url.Values{}
+	form.Set("logon", login)
+	form.Set("pwd", passwd)
+
+	response, err := wc.client.PostForm(loginURL, form)
+	if err != nil {
+		return fmt.Errorf("Login request failed: %s", err.Error())
+	}
+
+	defer response.Body.Close()
+
+	fmt.Println(" success [OK]")
+	dumpResponse("login.html", response.Body)
+
+	return nil
+}
+
+// Mahneclientlient :: login
+// TODO :: We have to check that 302 been recieved and profile is anavailable
+func (wc WebClient) logout() error {
+
+	logoutURL := wc.url("/?module=quit")
+
+	fmt.Printf("Logout url: %s", logoutURL)
+
+	response, err := wc.client.Get(logoutURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	fmt.Println(" success [OK]")
+
+	return nil
+}
+
+// Mahneclientlient :: profile
+// Returns true - own profile is available, auth is successful
+func (wc WebClient) profile() (bool, error) {
+
+	profileURL := wc.url(fmt.Sprintf("/web/%s", wc.Config.Login))
+
+	fmt.Printf("Profile url: %s", profileURL)
+
+	response, err := wc.client.Get(profileURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	fmt.Println(" success [OK]")
+	dumpResponse("profile.html", response.Body)
+
+	return true, nil
+}
+
+// --------------------------------------------------------------------------------------------------
 func main() {
 
-	var LoginURL = "http://mahnem.ru?module=login"
-	var LogoutURL = "http://www.mahnem.ru/?module=quit"
-	var ProfileURL = "http://www.mahnem.ru/?module=posts&user=_760112"
+	//var ProfileURL = "_760112"
 
-	initResultStorage()
+	var client = defaultClient()
 
-	client, err := initWebClient()
+	err := client.init()
 	if err != nil {
 		log.Fatal("Can't init web client", err.Error())
 	}
 
-	login(client, LoginURL, os.Args[1], os.Args[2], "login.html")
-	visitLink(client, ProfileURL, "_760112.html")
-	logout(client, LogoutURL)
-}
-
-func initWebClient() (*http.Client, error) {
-
-	jar, err := cookiejar.New(nil)
+	err = client.login()
 	if err != nil {
-		return nil, err
+		log.Fatal("Login failed", err.Error())
 	}
 
-	client := &http.Client{
-		CheckRedirect: redirect,
-		Jar:           jar,
-	}
-
-	return client, nil
-}
-
-func redirect(req *http.Request, via []*http.Request) error {
-	return http.ErrUseLastResponse
-}
-
-func login(client *http.Client, loginURL string, login string, password string, filename string) {
-
-	fmt.Printf("Login url: %s, username: %s, password: %s", loginURL, os.Args[1], os.Args[2])
-
-	loginFormData := url.Values{}
-	loginFormData.Set("logon", login)
-	loginFormData.Set("pwd", password)
-
-	response, err := client.PostForm(loginURL, loginFormData)
-
+	v, err := client.profile()
 	if err != nil {
-		log.Fatalf("Login request failed: %s\n", err.Error())
+		log.Fatal("Profile fetch failed, error ", err.Error())
+	} else if !v {
+		log.Fatal("Profile fetch failed")
 	}
 
-	fmt.Println(" success [OK]")
+	// Do something realy usefull ^_^
+	defer client.logout()
 
-	defer response.Body.Close()
-
-	dumpResponse(filename, response.Body)
-}
-
-func logout(client *http.Client, link string) {
-
-	fmt.Printf("Logout url: %s", link)
-
-	response, err := client.Get(link)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	fmt.Println(" success [OK]")
-}
-
-func visitLink(client *http.Client, link string, filename string) {
-
-	response, err := client.Get(link)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	dumpResponse(filename, response.Body)
-}
-
-func initResultStorage() {
-
-	_, err := os.Stat(ResultDIR)
-	if !os.IsExist(err) {
-		err = os.RemoveAll(ResultDIR)
-		if err != nil {
-			log.Fatalf("Can't remove existing fs result storage %s\n", err.Error())
-		}
-	}
-
-	err = os.MkdirAll(ResultDIR, os.ModeDir)
-	if err != nil {
-		log.Fatal("Can't init fs result storage")
-	}
-
-	err = os.Chdir(ResultDIR)
-	if err != nil {
-		log.Fatal("Can't change working directory to ", ResultDIR)
-	}
 }
 
 func dumpResponse(filename string, val io.ReadCloser) {
