@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+
+	"github.com/beevik/etree"
 )
 
 // Configuration configuration
@@ -169,17 +172,29 @@ func (wc WebClient) profile(username string) (bool, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer response.Body.Close()
+	//defer response.Body.Close()
 
 	fmt.Println(" success [OK]")
+
+	// TODO Read data to string
+	data, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return false, nil
+	}
+
+	doc := etree.NewDocument()
+	err = doc.ReadFromBytes(data)
+	if err != nil {
+		return false, err
+	}
+
+	//el := doc.FindElement("./html/body/table[@class='pagew']/tbody/tr/td[@class='pagew']/table")
+	el := doc.FindElement("//html/body/table")
+	if el == nil {
+		return false, nil
+	}
+
 	dumpResponse("profile.html", response.Body)
-
-	// TODO Read data to string and loook for '<table class=umenu' substring
-	//data, _ := ioutil.ReadAll(response.Body)
-	//if data == nil {
-	//	return false, nil
-	//}
-
 	return true, nil
 }
 
