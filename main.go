@@ -185,8 +185,6 @@ func (wc WebClient) profile(username string) (bool, error) {
 		log.Fatal(err)
 	}
 
-	username, _ = doc.Find("html body table.pagew tbody tr td.pagew table.t tbody tr td").SiblingsFiltered("div").Html()
-
 	doc.Find("html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2").Each(func(i int, sel *goquery.Selection) {
 		val := strings.ReplaceAll(strings.TrimSpace(sel.Contents().Text()), "\t", "")
 		val = re.ReplaceAllString(val, " ")
