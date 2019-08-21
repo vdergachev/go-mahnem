@@ -32,8 +32,17 @@ type WebClient struct {
 type Mahneclientlient interface {
 	init() error
 	login() error
-	profile(string) error
+	profile(*User) error
+	photos(*User) error
 	logout() error
+}
+
+// User struct populated bu Mahneclientlient::profile method
+type User struct {
+	Profile  string
+	Name     string
+	Location string
+	Photos   *[]string
 }
 
 func defaultClient() *WebClient {
@@ -123,19 +132,19 @@ func (wc WebClient) login() error {
 	}
 
 	defer response.Body.Close()
-	fmt.Println(" success [OK]")
-
-	dumpResponse("login.html", response.Body)
 
 	if response.StatusCode != 302 {
 		return fmt.Errorf("Login status code is %d", response.StatusCode)
 	}
 
+	// TODO Parse file and chech conent - no errors
+	fmt.Println(" success [OK]")
+	dumpResponse("login.html", response.Body)
+
 	return nil
 }
 
 // Mahneclientlient :: login
-// TODO :: We have to check that 302 been recieved and profile is anavailable
 func (wc WebClient) logout() error {
 
 	logoutURL := wc.url("/?module=quit")
@@ -159,51 +168,69 @@ func (wc WebClient) logout() error {
 
 // Mahneclientlient :: profile
 // Returns true - own profile is available, auth is successful
-func (wc WebClient) profile(username string) (bool, error) {
+func (wc WebClient) profile(user *User) error {
 
-	if len(username) == 0 {
-		username = wc.Config.Login
-	}
-
-	profileURL := wc.url(fmt.Sprintf("/web/%s", username))
-
-	fmt.Println("Profile url: %s\n", profileURL)
+	profileURL := wc.url(fmt.Sprintf("/web/%s", user.Profile))
 
 	response, err := wc.client.Get(profileURL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer response.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	re, err := regexp.Compile(`\r?\n`)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	doc.Find("html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2").Each(func(i int, sel *goquery.Selection) {
-		val := strings.ReplaceAll(strings.TrimSpace(sel.Contents().Text()), "\t", "")
-		val = re.ReplaceAllString(val, " ")
-		if len(username) == 0 {
-			return
-		}
-
-		fmt.Println(username)
+	LocationSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
+	doc.Find(LocationSel).Each(func(i int, sel *goquery.Selection) {
+		user.Location = strip(sel.Parent().Contents().Text()) // We need parent contents
 	})
 
-	//fmt.Println(" success [OK]")
-	//dumpResponse("profile.html", response.Body)
-	return true, nil
+	UsernameSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
+	doc.Find(UsernameSel).Each(func(i int, sel *goquery.Selection) {
+		if i == 0 {
+			user.Name = strip(sel.Contents().Text())
+		}
+	})
+
+	return nil
+}
+
+func (wc WebClient) photos(user *User) error {
+
+	photosURL := wc.url(fmt.Sprintf("/photo/%s", user.Profile))
+
+	response, err := wc.client.Get(photosURL)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+	//dumpResponse("photos.html", response.Body)
+
+	doc, err := goquery.NewDocumentFromReader(response.Body)
+	if err != nil {
+		return err
+	}
+
+	PhotosSel := "html body table.pagew tbody tr td.pagew div.pg-lst"
+	doc.Find(PhotosSel).SiblingsFiltered("script").Each(func(i int, sel *goquery.Selection) {
+		raw := sel.Contents().Text()
+		if strings.Contains(raw, "PS=[") {
+			raw = strings.Split(strings.Split(raw, "PS=[")[1], "]")[0]
+			data := strings.Split(strings.ReplaceAll(raw, "'", ""), ",")
+			user.Photos = &data
+		}
+	})
+
+	return nil
 }
 
 // --------------------------------------------------------------------------------------------------
 func main() {
 
-	//var ProfileURL = "_760112"
+	var nickname = "_760112"
 
 	var client = defaultClient()
 
@@ -216,16 +243,21 @@ func main() {
 	if err != nil {
 		log.Fatal("Login failed", err.Error())
 	}
+	defer client.logout()
 
-	v, err := client.profile("_760112")
+	var user = &User{Profile: nickname}
+
+	err = client.profile(user)
 	if err != nil {
 		log.Fatal("Profile fetch failed, error ", err.Error())
-	} else if !v {
-		log.Fatal("Profile fetch failed")
 	}
 
-	// Do something realy usefull ^_^
-	defer client.logout()
+	err = client.photos(user)
+	if err != nil {
+		log.Fatal("Photos fetch failed, error ", err.Error())
+	}
+
+	fmt.Println("profile: " + user.Name)
 
 }
 
@@ -244,4 +276,12 @@ func dumpResponse(filename string, val io.ReadCloser) {
 	fmt.Printf("\tfile %s (%d bytes) created\n",
 		filename,
 		written)
+}
+
+func strip(val string) string {
+	re, err := regexp.Compile(`\r?\n`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return re.ReplaceAllString(strings.ReplaceAll(val, "\t", ""), "")
 }
