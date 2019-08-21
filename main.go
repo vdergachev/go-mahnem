@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 
-	"github.com/beevik/etree"
+	"github.com/PuerkitoBio/goquery"
 )
 
 // Configuration configuration
@@ -166,35 +167,38 @@ func (wc WebClient) profile(username string) (bool, error) {
 
 	profileURL := wc.url(fmt.Sprintf("/web/%s", username))
 
-	fmt.Printf("Profile url: %s", profileURL)
+	fmt.Println("Profile url: %s\n", profileURL)
 
 	response, err := wc.client.Get(profileURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//defer response.Body.Close()
+	defer response.Body.Close()
 
-	fmt.Println(" success [OK]")
-
-	// TODO Read data to string
-	data, err := ioutil.ReadAll(response.Body)
+	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
-		return false, nil
+		log.Fatal(err)
 	}
 
-	doc := etree.NewDocument()
-	err = doc.ReadFromBytes(data)
+	re, err := regexp.Compile(`\r?\n`)
 	if err != nil {
-		return false, err
+		log.Fatal(err)
 	}
 
-	//el := doc.FindElement("./html/body/table[@class='pagew']/tbody/tr/td[@class='pagew']/table")
-	el := doc.FindElement("//html/body/table")
-	if el == nil {
-		return false, nil
-	}
+	username, _ = doc.Find("html body table.pagew tbody tr td.pagew table.t tbody tr td").SiblingsFiltered("div").Html()
 
-	dumpResponse("profile.html", response.Body)
+	doc.Find("html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2").Each(func(i int, sel *goquery.Selection) {
+		val := strings.ReplaceAll(strings.TrimSpace(sel.Contents().Text()), "\t", "")
+		val = re.ReplaceAllString(val, " ")
+		if len(username) == 0 {
+			return
+		}
+
+		fmt.Println(username)
+	})
+
+	//fmt.Println(" success [OK]")
+	//dumpResponse("profile.html", response.Body)
 	return true, nil
 }
 
@@ -215,7 +219,7 @@ func main() {
 		log.Fatal("Login failed", err.Error())
 	}
 
-	v, err := client.profile("")
+	v, err := client.profile("_760112")
 	if err != nil {
 		log.Fatal("Profile fetch failed, error ", err.Error())
 	} else if !v {
