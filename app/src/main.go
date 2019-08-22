@@ -4,19 +4,13 @@ import (
 	"log"
 )
 
-// --------------------------------------------------------------------------------------------------
 func main() {
 
 	var nickname = "_760112"
 
 	var client = newClient()
 
-	err := client.init()
-	if err != nil {
-		log.Fatal("Can't init web client", err.Error())
-	}
-
-	err = client.login()
+	err := client.login()
 	if err != nil {
 		log.Fatal("Login failed", err.Error())
 	}

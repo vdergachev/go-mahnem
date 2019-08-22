@@ -12,6 +12,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+const (
+	loginPath           = "?module=login"
+	logoutPath          = "/?module=quit"
+	profilePathTemplate = "/web/%s"
+)
+
 // Configuration configuration
 type Configuration struct {
 	BaseURL    string
@@ -66,40 +72,8 @@ func (wc WebClient) url(path string) string {
 	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
 }
 
-// Mahneclientlient :: initStorage
-func (wc WebClient) initStorage() error {
-
-	dir := wc.Config.DumpFolder
-
-	_, err := os.Stat(dir)
-	if !os.IsExist(err) {
-		err = os.RemoveAll(dir)
-		if err != nil {
-			return fmt.Errorf("Can't remove existing fs result storage %s", err.Error())
-		}
-	}
-
-	err = os.MkdirAll(dir, os.ModeDir)
-	if err != nil {
-		return fmt.Errorf("Can't init fs result storage")
-	}
-
-	err = os.Chdir(dir)
-	if err != nil {
-		return fmt.Errorf("Can't change working directory to %s", dir)
-	}
-
-	return nil
-}
-
 // Mahneclientlient :: init
 func (wc WebClient) init() error {
-
-	err := wc.initStorage()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return nil
 }
 
@@ -107,11 +81,11 @@ func (wc WebClient) init() error {
 // TODO :: We have to check that 302 been recieved and profile is available
 func (wc WebClient) login() error {
 
-	loginURL := wc.url("?module=login")
+	loginURL := wc.url(loginPath)
 	login := wc.Config.Login
 	passwd := wc.Config.Password
 
-	fmt.Printf("Login url: %s, username: %s, password: %s", loginURL, login, passwd)
+	fmt.Printf("Login url: %s, username: %s, password: %s\n", loginURL, login, passwd)
 
 	form := url.Values{}
 	form.Set("logon", login)
@@ -128,19 +102,15 @@ func (wc WebClient) login() error {
 		return fmt.Errorf("Login status code is %d", response.StatusCode)
 	}
 
-	// TODO Parse file and chech conent - no errors
-	fmt.Println(" success [OK]")
-	dumpResponse("login.html", response.Body)
-
 	return nil
 }
 
 // Mahneclientlient :: login
 func (wc WebClient) logout() error {
 
-	logoutURL := wc.url("/?module=quit")
+	logoutURL := wc.url(logoutPath)
 
-	fmt.Printf("Logout url: %s", logoutURL)
+	fmt.Printf("Logout url: %s\n", logoutURL)
 
 	response, err := wc.client.Get(logoutURL)
 	if err != nil {
@@ -152,8 +122,6 @@ func (wc WebClient) logout() error {
 		return fmt.Errorf("Logout status code is %d", response.StatusCode)
 	}
 
-	fmt.Println(" success [OK]")
-
 	return nil
 }
 
@@ -161,7 +129,7 @@ func (wc WebClient) logout() error {
 // Returns true - own profile is available, auth is successful
 func (wc WebClient) profile(user *User) error {
 
-	profileURL := wc.url(fmt.Sprintf("/web/%s", user.Profile))
+	profileURL := wc.url(fmt.Sprintf(profilePathTemplate, user.Profile))
 
 	response, err := wc.client.Get(profileURL)
 	if err != nil {
@@ -203,7 +171,6 @@ func (wc WebClient) photos(user *User) error {
 		return err
 	}
 	defer response.Body.Close()
-	//dumpResponse("photos.html", response.Body)
 
 	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
