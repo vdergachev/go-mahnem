@@ -2,13 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -36,14 +34,6 @@ type Mahneclientlient interface {
 	profile(*User) error
 	photos(*User) error
 	logout() error
-}
-
-// User struct populated bu Mahneclientlient::profile method
-type User struct {
-	Profile  string
-	Name     string
-	Location string // TODO Define structure with fields city and country
-	Photos   *[]string
 }
 
 func defaultClient() *WebClient {
@@ -185,16 +175,21 @@ func (wc WebClient) profile(user *User) error {
 	}
 
 	LocationSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
-	doc.Find(LocationSel).Each(func(i int, sel *goquery.Selection) {
-		user.Location = strip(sel.Parent().Contents().Text()) // We need parent contents
-	})
+	location := doc.Find(LocationSel).First().Parent().Contents().Text() // We need parent contents
+	user.Location = newLocation(location)
 
 	UsernameSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
-	doc.Find(UsernameSel).Each(func(i int, sel *goquery.Selection) {
-		if i == 0 {
-			user.Name = strip(sel.Contents().Text())
-		}
+	user.Name = strip(doc.Find(UsernameSel).First().Contents().Text())
+
+	LanguagesSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td a.black"
+	var langs []string
+	doc.Find(LanguagesSel).Each(func(i int, sel *goquery.Selection) {
+		langs = append(langs, sel.Contents().Text())
 	})
+	user.Languages = &langs
+
+	MottoSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
+	user.Motto = doc.Find(MottoSel).Last().Contents().Text()
 
 	return nil
 }
@@ -258,31 +253,6 @@ func main() {
 		log.Fatal("Photos fetch failed, error ", err.Error())
 	}
 
-	fmt.Println("profile: " + user.Name)
+	fmt.Println("profile: " + user.toString())
 
-}
-
-func dumpResponse(filename string, val io.ReadCloser) {
-	file, err := os.Create(filename)
-	if err != nil {
-		log.Fatalf("Can't create file %s, error: %s\n", filename, err.Error())
-	}
-	defer file.Close()
-
-	written, err := io.Copy(file, val)
-	if err != nil {
-		log.Fatalf("Can't save file %s, error: %s\n", filename, err.Error())
-	}
-
-	fmt.Printf("\tfile %s (%d bytes) created\n",
-		filename,
-		written)
-}
-
-func strip(val string) string {
-	re, err := regexp.Compile(`\r?\n`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return re.ReplaceAllString(strings.ReplaceAll(val, "\t", ""), "")
 }
