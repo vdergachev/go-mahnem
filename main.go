@@ -29,6 +29,7 @@ type WebClient struct {
 }
 
 // Mahneclientlient defenition of web client
+// TODO Check documentation how to implement interfaces
 type Mahneclientlient interface {
 	init() error
 	login() error
@@ -41,7 +42,7 @@ type Mahneclientlient interface {
 type User struct {
 	Profile  string
 	Name     string
-	Location string
+	Location string // TODO Define structure with fields city and country
 	Photos   *[]string
 }
 
