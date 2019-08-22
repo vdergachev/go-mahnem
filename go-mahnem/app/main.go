@@ -29,5 +29,4 @@ func main() {
 	}
 
 	log.Println("profile: " + user.toString())
-
 }
