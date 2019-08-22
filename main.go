@@ -1,176 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"net/http/cookiejar"
-	"net/url"
-	"os"
 )
-
-// Configuration configuration
-type Configuration struct {
-	BaseURL    string
-	Login      string
-	Password   string
-	DumpFolder string
-}
-
-// WebClient is basic web client struct
-type WebClient struct {
-	Config *Configuration
-	client *http.Client
-}
-
-// Mahneclientlient defenition of web client
-type Mahneclientlient interface {
-	init() error
-	login() error
-	profile() error
-	logout() error
-}
-
-func defaultClient() *WebClient {
-
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	webClient := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-		Jar: jar,
-	}
-
-	return &WebClient{
-		Config: &Configuration{
-			Login:      os.Args[1],
-			Password:   os.Args[2],
-			BaseURL:    "http://mahnem.ru",
-			DumpFolder: "./result",
-		},
-		client: webClient,
-	}
-}
-
-// Mahneclientlient :: url
-func (wc WebClient) url(path string) string {
-	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
-}
-
-// Mahneclientlient :: initStorage
-func (wc WebClient) initStorage() error {
-
-	dir := wc.Config.DumpFolder
-
-	_, err := os.Stat(dir)
-	if !os.IsExist(err) {
-		err = os.RemoveAll(dir)
-		if err != nil {
-			return fmt.Errorf("Can't remove existing fs result storage %s", err.Error())
-		}
-	}
-
-	err = os.MkdirAll(dir, os.ModeDir)
-	if err != nil {
-		return fmt.Errorf("Can't init fs result storage")
-	}
-
-	err = os.Chdir(dir)
-	if err != nil {
-		return fmt.Errorf("Can't change working directory to %s", dir)
-	}
-
-	return nil
-}
-
-// Mahneclientlient :: init
-func (wc WebClient) init() error {
-
-	err := wc.initStorage()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return nil
-}
-
-// Mahneclientlient :: login
-// TODO :: We have to check that 302 been recieved and profile is available
-func (wc WebClient) login() error {
-
-	loginURL := wc.url("?module=login")
-	login := wc.Config.Login
-	passwd := wc.Config.Password
-
-	fmt.Printf("Login url: %s, username: %s, password: %s", loginURL, login, passwd)
-
-	form := url.Values{}
-	form.Set("logon", login)
-	form.Set("pwd", passwd)
-
-	response, err := wc.client.PostForm(loginURL, form)
-	if err != nil {
-		return fmt.Errorf("Login request failed: %s", err.Error())
-	}
-
-	defer response.Body.Close()
-
-	fmt.Println(" success [OK]")
-	dumpResponse("login.html", response.Body)
-
-	return nil
-}
-
-// Mahneclientlient :: login
-// TODO :: We have to check that 302 been recieved and profile is anavailable
-func (wc WebClient) logout() error {
-
-	logoutURL := wc.url("/?module=quit")
-
-	fmt.Printf("Logout url: %s", logoutURL)
-
-	response, err := wc.client.Get(logoutURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	fmt.Println(" success [OK]")
-
-	return nil
-}
-
-// Mahneclientlient :: profile
-// Returns true - own profile is available, auth is successful
-func (wc WebClient) profile() (bool, error) {
-
-	profileURL := wc.url(fmt.Sprintf("/web/%s", wc.Config.Login))
-
-	fmt.Printf("Profile url: %s", profileURL)
-
-	response, err := wc.client.Get(profileURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	fmt.Println(" success [OK]")
-	dumpResponse("profile.html", response.Body)
-
-	return true, nil
-}
 
 // --------------------------------------------------------------------------------------------------
 func main() {
 
-	//var ProfileURL = "_760112"
+	var nickname = "_760112"
 
-	var client = defaultClient()
+	var client = newClient()
 
 	err := client.init()
 	if err != nil {
@@ -181,32 +20,20 @@ func main() {
 	if err != nil {
 		log.Fatal("Login failed", err.Error())
 	}
-
-	v, err := client.profile()
-	if err != nil {
-		log.Fatal("Profile fetch failed, error ", err.Error())
-	} else if !v {
-		log.Fatal("Profile fetch failed")
-	}
-
-	// Do something realy usefull ^_^
 	defer client.logout()
 
-}
+	var user = &User{Profile: nickname}
 
-func dumpResponse(filename string, val io.ReadCloser) {
-	file, err := os.Create(filename)
+	err = client.profile(user)
 	if err != nil {
-		log.Fatalf("Can't create file %s, error: %s\n", filename, err.Error())
-	}
-	defer file.Close()
-
-	written, err := io.Copy(file, val)
-	if err != nil {
-		log.Fatalf("Can't save file %s, error: %s\n", filename, err.Error())
+		log.Fatal("Profile fetch failed, error ", err.Error())
 	}
 
-	fmt.Printf("\tfile %s (%d bytes) created\n",
-		filename,
-		written)
+	err = client.photos(user)
+	if err != nil {
+		log.Fatal("Photos fetch failed, error ", err.Error())
+	}
+
+	log.Println("profile: " + user.toString())
+
 }
