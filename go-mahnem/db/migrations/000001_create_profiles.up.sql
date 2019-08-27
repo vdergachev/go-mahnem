@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS user_profile (
     user_name VARCHAR (50) NOT NULL,
     user_location_id INT REFERENCES user_location (user_location_id),
     user_language_id INT REFERENCES user_language (user_language_id),
-    motto VARCHAR (200)
+    motto TEXT
 );
 
 CREATE TABLE IF NOT EXISTS user_photo (
