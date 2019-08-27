@@ -21,7 +21,7 @@ func main() {
 		defaultPort   = 5432
 		defaultDb     = "goma"
 		defaultUser   = "postgres"
-		defaultPasswd = "1"
+		defaultPasswd = ""
 	)
 
 	var mode = flag.String("mode", defaultMode, "migrate mode")
@@ -48,8 +48,7 @@ func main() {
 			*passwd,
 		)
 
-		err := doInit(psqlInfo)
-		if err != nil {
+		if err := doInit(psqlInfo); err != nil {
 			log.Fatal(err)
 		}
 
@@ -63,8 +62,7 @@ func main() {
 			*dbname,
 		)
 
-		err := doMigrate(dbURL)
-		if err != nil {
+		if err := doMigrate(dbURL); err != nil {
 			log.Fatal(err)
 		}
 	}
