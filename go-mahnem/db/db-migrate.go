@@ -38,7 +38,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	var dbURL string
 	if strings.ToLower(*mode) == "init" {
 
 		psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable",
@@ -54,7 +53,7 @@ func main() {
 
 	} else {
 
-		dbURL = fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+		dbURL := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 			*username,
 			*passwd,
 			*hostname,
