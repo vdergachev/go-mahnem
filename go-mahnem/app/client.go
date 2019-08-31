@@ -41,7 +41,8 @@ type Mahneclientlient interface {
 	logout() error
 }
 
-func newClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
+// NewClient creates new web client
+func NewClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {

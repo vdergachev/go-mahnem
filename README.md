@@ -16,3 +16,16 @@ My first golang project, simple web cwawler of mahnem.ru with rest API and nice 
 
 ## Maintainer
 Vladimir Dergachev (4dergachev@gmail.com)
+
+## Deps
+#### Compile
+* github.com/spf13/viper
+* github.com/PuerkitoBio/goquery
+* github.com/lib/pq
+* github.com/Masterminds/squirrel
+* github.com/golang-migrate/migrate
+* github.com/golang-migrate/migrate/database/postgres
+* github.com/mitchellh/mapstructure
+
+#### Test
+* github.com/stretchr/testify

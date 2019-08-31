@@ -6,13 +6,24 @@ import (
 
 func main() {
 
-	log.Printf("App config is %+v\n", *GetAppConfig())
+	//log.Printf("App config is %+v\n", *GetAppConfig())
+
+	rep, err := NewRepository()
+	if err != nil {
+		log.Fatal("Db connection init failed", err.Error())
+	}
+	defer rep.Close()
+
+	// TODO Remove later
+	rep.deleteAllUsers()
+	rep.deleteAllLanguages()
+	rep.deleteAllLocations()
 
 	const (
 		nickname = "_760112"
 	)
 
-	client, err := newClient()
+	client, err := NewClient()
 	if err != nil {
 		log.Fatal("Web client init failed", err.Error())
 	}
@@ -35,5 +46,22 @@ func main() {
 		log.Fatal("Photos fetch failed, error ", err.Error())
 	}
 
-	log.Println("profile: " + user.toString())
+	var locationID uint64
+	if locationID = rep.FindLocation(user.Location.Country, user.Location.City); locationID == 0 {
+		locationID = rep.StoreLocation(user.Location.Country, user.Location.City)
+	}
+
+	var ulang = (*user.Languages)[0]
+	var languageID uint64
+	if languageID = rep.FindLanguageByName(ulang); languageID == 0 {
+		languageID = rep.StoreLanguage(ulang)
+	}
+
+	rep.StoreUser("nickname", "Nick Name", locationID, languageID)
+
+	log.Println("###################### STATISTICS ######################")
+	log.Println("## users    ", rep.CountUsers())
+	log.Println("## languages", rep.CountLanguages())
+	log.Println("## locations", rep.CountLocations())
+	log.Println("###################### STATISTICS ######################")
 }

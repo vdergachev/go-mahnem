@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var instance *AppConfig
+var _config *AppConfig
 
 // DatabaseConfig application config
 type DatabaseConfig struct {
@@ -43,9 +43,12 @@ func (cfg AppConfig) SiteConfig() *SiteConfig {
 }
 
 func init() {
+
+	log.Println("init [config.go]")
+
 	var err error
-	instance, err = readAppConfiguration()
-	if instance == nil || err != nil {
+	_config, err = readAppConfiguration()
+	if _config == nil || err != nil {
 		log.Fatalf("Can't read config file, %s\n", err.Error())
 	}
 }
@@ -104,5 +107,5 @@ func fetchConfig(section string, ptr interface{}) error {
 
 // GetAppConfig returns application configuration
 func GetAppConfig() *AppConfig {
-	return instance
+	return _config
 }
