@@ -4,7 +4,6 @@
 My first golang project, simple web cwawler of mahnem.ru with rest API and nice UI
 
 ## TODO
-- Add database provisioning tool (db-migrate module)
 - Define external configuration in application.yml
 - Add Service layer (work with db, storing user names)
 - Add Rest API to drive fetch process
