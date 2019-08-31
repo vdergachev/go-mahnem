@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
 func main() {
 
-	fmt.Printf("App config is %+v\n", *GetAppConfig())
+	log.Printf("App config is %+v\n", *GetAppConfig())
 
 	const (
 		nickname = "_760112"

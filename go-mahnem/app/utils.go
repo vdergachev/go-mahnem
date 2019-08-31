@@ -5,17 +5,17 @@ import (
 	"io"
 	"log"
 	"os"
-	"regexp"
 	"strings"
 )
 
+var replacer *strings.Replacer
+
+func init() {
+	replacer = strings.NewReplacer("\r", "", "\n", "", "\t", "", " ", "")
+}
+
 func strip(val string) string {
-	re, err := regexp.Compile(`\r?\n`)
-	if err != nil {
-		log.Fatal(err)
-	}
-	val = strings.TrimSpace(strings.ReplaceAll(val, "\t", ""))
-	return re.ReplaceAllString(val, "")
+	return replacer.Replace(val)
 }
 
 // Sometimes is very usefull to have ability dump response to the file
