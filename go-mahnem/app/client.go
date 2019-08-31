@@ -5,14 +5,12 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 const (
-	baseURL             = "http://mahnem.ru"
 	loginPath           = "?module=login"
 	logoutPath          = "/?module=quit"
 	profilePathTemplate = "/web/%s"
@@ -26,6 +24,7 @@ type Configuration struct {
 }
 
 // WebClient is basic web client struct
+// TODO We have duplicate struct in config.go
 type WebClient struct {
 	Config *Configuration
 	client *http.Client
@@ -55,11 +54,13 @@ func newClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 		Jar: jar,
 	}
 
+	config := GetAppConfig().Site
+
 	return &WebClient{
 		Config: &Configuration{
-			Login:    os.Args[1],
-			Password: os.Args[2],
-			BaseURL:  baseURL,
+			Login:    config.Login,
+			Password: config.Password,
+			BaseURL:  config.URL,
 		},
 		client: webClient,
 	}, nil

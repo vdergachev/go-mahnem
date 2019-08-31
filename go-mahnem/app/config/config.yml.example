@@ -1,0 +1,26 @@
+db:
+    url:      "localhost"
+    port:     5432
+    database: "gomo"
+    username: "postgres"
+    password: "admin"
+
+site:
+    url:       "http://mahnem.ru/"
+    login:     "ADD_YOUR_LOGIN"
+    password:  "AND_YOUR_PASSWD"
+
+# site: 
+#     url:           "http://mahnem.ru/"
+#     
+#     login:
+#         path:       "?module=login"
+#         form:    
+#             logon:  "evilcat777"
+#             pwd:    "4709762"
+#     
+#     logout:
+#         path:       "/?module=quit"
+# 
+#     profile:
+#         path:       "/web/%s"    

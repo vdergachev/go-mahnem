@@ -1,3 +1,4 @@
 .vscode
 result/**
 __debug_bin
+config.yml
