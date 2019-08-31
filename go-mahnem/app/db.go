@@ -125,6 +125,14 @@ func (rep Repository) deleteAllLocations() {
 	rep.truncate(sq.Delete("user_location"))
 }
 
+func (rep Repository) deleteAllUserPhotos() {
+	rep.truncate(sq.Delete("user_photo"))
+}
+
+func (rep Repository) deleteAllUserLanguages() {
+	rep.truncate(sq.Delete("user_to_language"))
+}
+
 // Count...
 
 // CountUsers counts existing user profiles
@@ -142,10 +150,15 @@ func (rep Repository) CountLocations() uint64 {
 	return rep.fetch(sq.Select("count(*)").From("user_location"))
 }
 
+// CountUserPhotos counts user photos
+func (rep Repository) CountUserPhotos() uint64 {
+	return rep.fetch(sq.Select("count(*)").From("user_photo"))
+}
+
 // Store...
 
 // StoreUser save user profile to database
-func (rep Repository) StoreUser(login string, name string, locationID uint64, languageID uint64) uint64 {
+func (rep Repository) StoreUser(login string, name string, locationID uint64, motto string) uint64 {
 
 	query := psql().Insert(
 		"user_profile",
@@ -153,12 +166,12 @@ func (rep Repository) StoreUser(login string, name string, locationID uint64, la
 		"user_login",
 		"user_name",
 		"user_location_id",
-		"user_language_id",
+		"motto",
 	).Values(
 		login,
 		name,
 		locationID,
-		languageID,
+		motto,
 	).Suffix("RETURNING user_profile_id")
 
 	return rep.insert(query)
@@ -178,6 +191,22 @@ func (rep Repository) StoreLanguage(language string) uint64 {
 	return rep.insert(query)
 }
 
+// StoreUserLanguage add language to the user
+func (rep Repository) StoreUserLanguage(userID uint64, languageID uint64) uint64 {
+
+	query := psql().Insert(
+		"user_to_language",
+	).Columns(
+		"user_profile_id",
+		"user_language_id",
+	).Values(
+		userID,
+		languageID,
+	).Suffix("ON CONFLICT (user_profile_id, user_language_id) DO NOTHING")
+
+	return rep.insert(query)
+}
+
 // StoreLocation save user location to db
 func (rep Repository) StoreLocation(country string, city string) uint64 {
 	query := psql().Insert(
@@ -189,6 +218,21 @@ func (rep Repository) StoreLocation(country string, city string) uint64 {
 		country,
 		city,
 	).Suffix("RETURNING user_location_id")
+
+	return rep.insert(query)
+}
+
+// StoreUserPhoto save user photo link to db
+func (rep Repository) StoreUserPhoto(userID uint64, url string) uint64 {
+	query := psql().Insert(
+		"user_photo",
+	).Columns(
+		"user_profile_id",
+		"url",
+	).Values(
+		userID,
+		url,
+	).Suffix("RETURNING user_photo_id")
 
 	return rep.insert(query)
 }
@@ -221,6 +265,16 @@ func (rep Repository) FindLocation(country string, city string) uint64 {
 		Select("user_location_id").
 		From("user_location").
 		Where(sq.Eq{"country": country, "city": city})
+
+	return rep.fetch(query)
+}
+
+// FindUserPhoto finds user photo by user id and link
+func (rep Repository) FindUserPhoto(userID uint64, url string) uint64 {
+	query := psql().
+		Select("user_photo_id").
+		From("user_photo").
+		Where(sq.Eq{"user_profile_id": userID, "url": url})
 
 	return rep.fetch(query)
 }

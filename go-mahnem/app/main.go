@@ -15,15 +15,17 @@ func main() {
 	defer rep.Close()
 
 	// TODO Remove later
-	rep.deleteAllUsers()
+	rep.deleteAllUserPhotos()
 	rep.deleteAllLanguages()
+	rep.deleteAllUsers()
 	rep.deleteAllLocations()
+	rep.deleteAllUserLanguages()
 
 	const (
 		nickname = "_760112"
 	)
 
-	client, err := NewClient()
+	client, err := NewWebClient()
 	if err != nil {
 		log.Fatal("Web client init failed", err.Error())
 	}
@@ -46,22 +48,34 @@ func main() {
 		log.Fatal("Photos fetch failed, error ", err.Error())
 	}
 
+	// TODO Add locId to Location struct
 	var locationID uint64
 	if locationID = rep.FindLocation(user.Location.Country, user.Location.City); locationID == 0 {
 		locationID = rep.StoreLocation(user.Location.Country, user.Location.City)
 	}
 
+	// TODO Add userId to User struct
+	userID := rep.StoreUser(user.Profile, user.Name, locationID, user.Motto)
+
+	// LOOP IT -->
+
+	// TODO Add langId to Languages struct
 	var ulang = (*user.Languages)[0]
 	var languageID uint64
 	if languageID = rep.FindLanguageByName(ulang); languageID == 0 {
 		languageID = rep.StoreLanguage(ulang)
 	}
+	rep.StoreUserLanguage(userID, languageID)
 
-	rep.StoreUser("nickname", "Nick Name", locationID, languageID)
+	// LOOP IT -->
+
+	// TODO Define UserPhoto struct
+	rep.StoreUserPhoto(userID, (*user.Photos)[0])
 
 	log.Println("###################### STATISTICS ######################")
 	log.Println("## users    ", rep.CountUsers())
 	log.Println("## languages", rep.CountLanguages())
 	log.Println("## locations", rep.CountLocations())
+	log.Println("## photos   ", rep.CountUserPhotos())
 	log.Println("###################### STATISTICS ######################")
 }
