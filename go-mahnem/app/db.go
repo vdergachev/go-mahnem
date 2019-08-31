@@ -112,6 +112,7 @@ func (rep Repository) insert(sb sq.InsertBuilder) uint64 {
 	return 0
 }
 
+// TODO 		WE DEFENETLY NEED A CASCADE SETUP IN TABLES
 // DeleteAll...
 func (rep Repository) deleteAllUsers() {
 	rep.truncate(sq.Delete("user_profile"))
@@ -232,7 +233,7 @@ func (rep Repository) StoreUserPhoto(userID uint64, url string) uint64 {
 	).Values(
 		userID,
 		url,
-	).Suffix("RETURNING user_photo_id")
+	).Suffix("ON CONFLICT (user_profile_id, url) DO NOTHING RETURNING user_photo_id")
 
 	return rep.insert(query)
 }

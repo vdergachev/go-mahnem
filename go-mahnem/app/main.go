@@ -15,14 +15,18 @@ func main() {
 	defer rep.Close()
 
 	// TODO Remove later
-	rep.deleteAllUserPhotos()
-	rep.deleteAllLanguages()
-	rep.deleteAllUsers()
-	rep.deleteAllLocations()
-	rep.deleteAllUserLanguages()
+	/*
+		rep.deleteAllUserPhotos()
+		rep.deleteAllLanguages()
+		rep.deleteAllUsers()
+		rep.deleteAllLocations()
+		rep.deleteAllUserLanguages()
+	*/
 
 	const (
-		nickname = "_760112"
+		// nickname = "_760112"
+		//nickname = "evilcat777"
+		nickname = "_760110"
 	)
 
 	client, err := NewWebClient()
@@ -55,20 +59,27 @@ func main() {
 	}
 
 	// TODO Add userId to User struct
-	userID := rep.StoreUser(user.Profile, user.Name, locationID, user.Motto)
+	var userID uint64
+	if userID = rep.FindUserByLogin(user.Profile); userID == 0 {
+		userID = rep.StoreUser(user.Profile, user.Name, locationID, user.Motto)
+	}
 
 	// TODO Add langId to Languages struct
-	for _, lang := range *user.Languages {
-		var languageID uint64
-		if languageID = rep.FindLanguageByName(lang); languageID == 0 {
-			languageID = rep.StoreLanguage(lang)
+	if user.Languages != nil {
+		for _, lang := range *user.Languages {
+			var languageID uint64
+			if languageID = rep.FindLanguageByName(lang); languageID == 0 {
+				languageID = rep.StoreLanguage(lang)
+			}
+			rep.StoreUserLanguage(userID, languageID)
 		}
-		rep.StoreUserLanguage(userID, languageID)
 	}
 
 	// TODO Define UserPhoto struct
-	for _, photo := range *user.Photos {
-		rep.StoreUserPhoto(userID, photo)
+	if user.Photos != nil {
+		for _, photo := range *user.Photos {
+			rep.StoreUserPhoto(userID, photo)
+		}
 	}
 
 	log.Println("###################### STATISTICS ######################")
