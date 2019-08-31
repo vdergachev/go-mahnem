@@ -57,20 +57,19 @@ func main() {
 	// TODO Add userId to User struct
 	userID := rep.StoreUser(user.Profile, user.Name, locationID, user.Motto)
 
-	// LOOP IT -->
-
 	// TODO Add langId to Languages struct
-	var ulang = (*user.Languages)[0]
-	var languageID uint64
-	if languageID = rep.FindLanguageByName(ulang); languageID == 0 {
-		languageID = rep.StoreLanguage(ulang)
+	for _, lang := range *user.Languages {
+		var languageID uint64
+		if languageID = rep.FindLanguageByName(lang); languageID == 0 {
+			languageID = rep.StoreLanguage(lang)
+		}
+		rep.StoreUserLanguage(userID, languageID)
 	}
-	rep.StoreUserLanguage(userID, languageID)
-
-	// LOOP IT -->
 
 	// TODO Define UserPhoto struct
-	rep.StoreUserPhoto(userID, (*user.Photos)[0])
+	for _, photo := range *user.Photos {
+		rep.StoreUserPhoto(userID, photo)
+	}
 
 	log.Println("###################### STATISTICS ######################")
 	log.Println("## users    ", rep.CountUsers())
