@@ -6,11 +6,16 @@ import (
 
 func main() {
 
-	var nickname = "_760112"
+	const (
+		nickname = "_760112"
+	)
 
-	var client = newClient()
+	client, err := newClient()
+	if err != nil {
+		log.Fatal("Web client init failed", err.Error())
+	}
 
-	err := client.login()
+	err = client.login()
 	if err != nil {
 		log.Fatal("Login failed", err.Error())
 	}

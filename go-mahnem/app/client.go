@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 )
 
 const (
+	baseURL             = "http://mahnem.ru"
 	loginPath           = "?module=login"
 	logoutPath          = "/?module=quit"
 	profilePathTemplate = "/web/%s"
@@ -20,10 +20,9 @@ const (
 
 // Configuration configuration
 type Configuration struct {
-	BaseURL    string
-	Login      string
-	Password   string
-	DumpFolder string
+	BaseURL  string
+	Login    string
+	Password string
 }
 
 // WebClient is basic web client struct
@@ -42,11 +41,11 @@ type Mahneclientlient interface {
 	logout() error
 }
 
-func newClient() *WebClient { // TODO Fix to *Mahneclientlient
+func newClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	webClient := &http.Client{
@@ -58,13 +57,12 @@ func newClient() *WebClient { // TODO Fix to *Mahneclientlient
 
 	return &WebClient{
 		Config: &Configuration{
-			Login:      os.Args[1],
-			Password:   os.Args[2],
-			BaseURL:    "http://mahnem.ru",
-			DumpFolder: "./result",
+			Login:    os.Args[1],
+			Password: os.Args[2],
+			BaseURL:  baseURL,
 		},
 		client: webClient,
-	}
+	}, nil
 }
 
 // Mahneclientlient :: url
@@ -114,7 +112,7 @@ func (wc WebClient) logout() error {
 
 	response, err := wc.client.Get(logoutURL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer response.Body.Close()
 
