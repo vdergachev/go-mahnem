@@ -4,10 +4,14 @@
 My first golang project, simple web cwawler of mahnem.ru with rest API and nice UI
 
 ## TODO
-- Define external configuration in application.yml
-- Add Service layer (work with db, storing user names)
+
+- Add Repository (work with db, storing fetched users data)
+- Add fetch strategies (base on dictionary, on int ranges and on built in  search)
+- Add service using strategies
+- Cover by tests
+
 - Add Rest API to drive fetch process
-- Add UI to manage fetch process 
+- Add UI to manage fetch process
 - Cover by tests
 
 ## Maintainer

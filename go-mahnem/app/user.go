@@ -23,7 +23,16 @@ type User struct {
 
 // NewLocation function parses string and returns user location
 func newLocation(val string) *Location {
+	if len(val) == 0 {
+		return &Location{}
+	}
+
 	vals := strings.Split(strip(val), ",")
+
+	if len(vals) != 2 {
+		return &Location{}
+	}
+
 	return &Location{
 		City:    strip(vals[0]),
 		Country: strip(vals[1]),
