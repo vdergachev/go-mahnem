@@ -4,6 +4,8 @@ db:
     database: "goma"
     username: "postgres"
     password: "admin"
+    maxconnections: 100
+    acquirerimeout: 3000
 
 site:
     url:       "http://mahnem.ru/"

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx"
 )
 
 var _repository *Repository
@@ -17,7 +17,7 @@ func init() {
 
 // Repository represination of user repository
 type Repository struct {
-	db *sql.DB
+	cp *pgx.ConnPool
 }
 
 // NewRepository connects with db and allow to interact with it
@@ -29,33 +29,49 @@ func NewRepository() (*Repository, error) {
 
 	cfg := GetAppConfig().Db
 
-	dataSource := fmt.Sprintf(""+
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.URL,
-		cfg.Port,
-		cfg.Username,
-		cfg.Password,
-		cfg.Database,
-	)
+	connCfg := pgx.ConnConfig{
+		Host:     cfg.URL,
+		Port:     cfg.Port,
+		User:     cfg.Username,
+		Password: cfg.Password,
+		Database: cfg.Database,
+	}
 
-	d, err := sql.Open("postgres", dataSource)
+	connPoolCfg := pgx.ConnPoolConfig{
+		ConnConfig:     connCfg,
+		MaxConnections: cfg.MaxConnections,
+		AcquireTimeout: time.Millisecond * time.Duration(cfg.AcquireTimeout),
+	}
+
+	cp, err := pgx.NewConnPool(connPoolCfg)
 	if err != nil {
 		return nil, fmt.Errorf("Can't connect with DB, %s", err.Error())
 	}
 
-	d.SetMaxOpenConns(100)
-	d.SetMaxIdleConns(5)
-
-	_repository = &Repository{db: d}
+	_repository = &Repository{cp: cp}
 
 	return _repository, nil
 }
 
 // Close closes connection with db
 func (rep Repository) Close() {
-	if rep.db != nil {
-		rep.db.Close()
+	if rep.cp != nil {
+		rep.cp.Close()
 	}
+}
+
+// Connection retrieve available connection from pool
+func (rep Repository) Connection() *pgx.Conn {
+	conn, err := rep.cp.Acquire()
+	if err != nil {
+		log.Printf("Can't acquire db connection from pool: %s\n", err.Error())
+	}
+	return conn
+}
+
+// Release returns connection to the pool
+func (rep Repository) Release(conn *pgx.Conn) {
+	rep.cp.Release(conn)
 }
 
 func psql() sq.StatementBuilderType {
@@ -63,52 +79,38 @@ func psql() sq.StatementBuilderType {
 }
 
 func (rep Repository) truncate(sb sq.DeleteBuilder) {
-	rows, err := sb.RunWith(rep.db).Query()
-	if err == nil {
-		rows.Close()
-	} else {
-		sql, args, _ := sb.ToSql()
-		log.Printf("Query '%s' with args '%+v' failed, %s\n", sql, args, err.Error())
+	if connection := rep.Connection(); connection != nil {
+		defer rep.Release(connection)
+		sql, _, _ := sb.ToSql()
+		connection.QueryRow(sql)
 	}
 }
 
 func (rep Repository) fetch(sb sq.SelectBuilder) uint64 {
+	if connection := rep.Connection(); connection != nil {
+		defer rep.Release(connection)
+		sql, args, _ := sb.ToSql()
 
-	rows, err := sb.RunWith(rep.db).Query()
-
-	if err == nil {
-
-		defer rows.Close()
-
-		if rows.Next() {
+		if row := connection.QueryRow(sql, args...); row != nil {
 			var count uint64
-			rows.Scan(&count)
+			row.Scan(&count)
 			return count
 		}
-		return 0
 	}
-
-	sql, args, _ := sb.ToSql()
-	log.Printf("Query '%s' with args '%+v' failed, %s\n", sql, args, err.Error())
 	return 0
 }
 
 func (rep Repository) insert(sb sq.InsertBuilder) uint64 {
+	if connection := rep.Connection(); connection != nil {
+		defer rep.Release(connection)
+		sql, args, _ := sb.ToSql()
 
-	rows, err := sb.RunWith(rep.db).Query()
-
-	if err == nil {
-		defer rows.Close()
-		if rows.Next() {
-			var id uint64
-			rows.Scan(&id)
-			return id
+		if row := connection.QueryRow(sql, args...); row != nil {
+			var count uint64
+			row.Scan(&count)
+			return count
 		}
-		return 0
 	}
-
-	sql, args, _ := sb.ToSql()
-	log.Printf("Query '%s' with args '%+v' failed, %s\n", sql, args, err.Error())
 	return 0
 }
 
@@ -278,4 +280,14 @@ func (rep Repository) FindUserPhoto(userID uint64, url string) uint64 {
 		Where(sq.Eq{"user_profile_id": userID, "url": url})
 
 	return rep.fetch(query)
+}
+
+// PrintStats print number of stored users, langs, photos etc
+func (rep Repository) PrintStats() {
+	log.Println("###################### STATISTICS ######################")
+	log.Println("## users    ", rep.CountUsers())
+	log.Println("## languages", rep.CountLanguages())
+	log.Println("## locations", rep.CountLocations())
+	log.Println("## photos   ", rep.CountUserPhotos())
+	log.Println("###################### STATISTICS ######################")
 }

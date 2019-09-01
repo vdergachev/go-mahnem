@@ -12,11 +12,13 @@ var _config *AppConfig
 
 // DatabaseConfig application config
 type DatabaseConfig struct {
-	URL      string
-	Port     int16
-	Database string
-	Username string
-	Password string
+	URL            string
+	Port           uint16
+	Database       string
+	Username       string
+	Password       string
+	MaxConnections int   `mapstructure:"max-connections"`
+	AcquireTimeout int64 `mapstructure:"acquire-timeout"`
 }
 
 // SiteConfig application config

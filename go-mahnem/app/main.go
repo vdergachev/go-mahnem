@@ -24,9 +24,9 @@ func main() {
 	*/
 
 	const (
-		// nickname = "_760112"
+		nickname = "_760112"
 		//nickname = "evilcat777"
-		nickname = "_760110"
+		//nickname = "_760110"
 	)
 
 	client, err := NewWebClient()
@@ -82,10 +82,5 @@ func main() {
 		}
 	}
 
-	log.Println("###################### STATISTICS ######################")
-	log.Println("## users    ", rep.CountUsers())
-	log.Println("## languages", rep.CountLanguages())
-	log.Println("## locations", rep.CountLocations())
-	log.Println("## photos   ", rep.CountUserPhotos())
-	log.Println("###################### STATISTICS ######################")
+	rep.PrintStats()
 }

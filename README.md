@@ -21,7 +21,8 @@ Vladimir Dergachev (4dergachev@gmail.com)
 #### Compile
 * github.com/spf13/viper
 * github.com/PuerkitoBio/goquery
-* github.com/lib/pq
+* github.com/jackc/pgx
+* github.com/lib/pq (db migrate only)
 * github.com/Masterminds/squirrel
 * github.com/golang-migrate/migrate
 * github.com/golang-migrate/migrate/database/postgres
