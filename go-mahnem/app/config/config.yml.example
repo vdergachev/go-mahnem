@@ -1,9 +1,11 @@
 db:
     url:      "localhost"
     port:     5432
-    database: "gomo"
+    database: "goma"
     username: "postgres"
     password: "admin"
+    maxconnections: 100
+    acquirerimeout: 3000
 
 site:
     url:       "http://mahnem.ru/"
@@ -16,8 +18,8 @@ site:
 #     login:
 #         path:       "?module=login"
 #         form:    
-#             logon:  "evilcat777"
-#             pwd:    "4709762"
+#             logon:  "ADD_YOUR_LOGIN"
+#             pwd:    "AND_YOUR_PASSWD"
 #     
 #     logout:
 #         path:       "/?module=quit"

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -40,7 +41,8 @@ type Mahneclientlient interface {
 	logout() error
 }
 
-func newClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
+// NewWebClient creates new web client
+func NewWebClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -84,7 +86,7 @@ func (wc WebClient) login() error {
 	login := wc.Config.Login
 	passwd := wc.Config.Password
 
-	fmt.Printf("Login url: %s, username: %s, password: %s\n", loginURL, login, passwd)
+	log.Printf("Login url: %s, username: %s, password: %s\n", loginURL, login, passwd)
 
 	form := url.Values{}
 	form.Set("logon", login)
@@ -109,7 +111,7 @@ func (wc WebClient) logout() error {
 
 	logoutURL := wc.url(logoutPath)
 
-	fmt.Printf("Logout url: %s\n", logoutURL)
+	log.Printf("Logout url: %s\n", logoutURL)
 
 	response, err := wc.client.Get(logoutURL)
 	if err != nil {

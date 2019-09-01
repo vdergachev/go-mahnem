@@ -69,9 +69,6 @@ func main() {
 }
 
 func doInit(psqlInfo string) error {
-	const (
-		initSQL = `CREATE DATABASE goma`
-	)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -85,7 +82,7 @@ func doInit(psqlInfo string) error {
 		return err
 	}
 
-	r, err := db.Exec(initSQL)
+	r, err := db.Exec(`CREATE DATABASE goma`)
 	if err != nil || r == nil {
 		return err
 	}
