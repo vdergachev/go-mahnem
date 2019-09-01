@@ -5,10 +5,9 @@ My first golang project, simple web cwawler of mahnem.ru with rest API and nice 
 
 ## TODO
 
-- Add Repository (work with db, storing fetched users data)
 - Add fetch strategies (base on dictionary, on int ranges and on built in  search)
 - Add service using strategies
-- Cover by tests
+- Cover by tests (fetch html pages, db queries, service logic)
 
 - Add Rest API to drive fetch process
 - Add UI to manage fetch process
