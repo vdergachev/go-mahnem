@@ -25,24 +25,26 @@ type Configuration struct {
 }
 
 // WebClient is basic web client struct
-// TODO We have duplicate struct in config.go
-type WebClient struct {
+type WebClient struct { // TODO We have duplicate struct in config.go
 	Config *Configuration
 	client *http.Client
 }
 
-// Mahneclientlient defenition of web client
-// TODO Check documentation how to implement interfaces
-type Mahneclientlient interface {
-	init() error
-	login() error
-	profile(*User) error
-	photos(*User) error
-	logout() error
+// MahnemClient defenition of web client
+type MahnemClient interface { // TODO Check documentation how to implement interfaces
+	Login() error
+	Profile(*User) error
+	Photos(*User) error
+	Logout() error
+}
+
+// Mahneclientlient :: url
+func (wc WebClient) url(path string) string {
+	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
 }
 
 // NewWebClient creates new web client
-func NewWebClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
+func NewWebClient() (MahnemClient, error) { // TODO Fix to *Mahneclientlient
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -58,7 +60,7 @@ func NewWebClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 
 	config := GetAppConfig().Site
 
-	return &WebClient{
+	return WebClient{
 		Config: &Configuration{
 			Login:    config.Login,
 			Password: config.Password,
@@ -68,19 +70,8 @@ func NewWebClient() (*WebClient, error) { // TODO Fix to *Mahneclientlient
 	}, nil
 }
 
-// Mahneclientlient :: url
-func (wc WebClient) url(path string) string {
-	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
-}
-
-// Mahneclientlient :: init
-func (wc WebClient) init() error {
-	return nil
-}
-
-// Mahneclientlient :: login
-// TODO :: We have to check that 302 been recieved and profile is available
-func (wc WebClient) login() error {
+// Login log in
+func (wc WebClient) Login() error {
 
 	loginURL := wc.url(loginPath)
 	login := wc.Config.Login
@@ -106,8 +97,8 @@ func (wc WebClient) login() error {
 	return nil
 }
 
-// Mahneclientlient :: login
-func (wc WebClient) logout() error {
+// Logout log out
+func (wc WebClient) Logout() error {
 
 	logoutURL := wc.url(logoutPath)
 
@@ -126,9 +117,18 @@ func (wc WebClient) logout() error {
 	return nil
 }
 
-// Mahneclientlient :: profile
-// Returns true - own profile is available, auth is successful
-func (wc WebClient) profile(user *User) error {
+// Profile fetch user profile
+func (wc WebClient) Profile(user *User) error {
+
+	const (
+		selLocation = "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
+
+		selUsername = "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
+
+		selLanguages = "html body table.pagew tbody tr td.pagew table.t tbody tr td a.black"
+
+		selMotto = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
+	)
 
 	profileURL := wc.url(fmt.Sprintf(profilePathTemplate, user.Profile))
 
@@ -143,27 +143,27 @@ func (wc WebClient) profile(user *User) error {
 		return err
 	}
 
-	LocationSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
-	location := doc.Find(LocationSel).First().Parent().Contents().Text() // We need parent contents
-	user.Location = newLocation(location)
+	user.Location = newLocation(doc.Find(selLocation).First().Parent().Contents().Text()) // We need parent contents
 
-	UsernameSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
-	user.Name = strip(doc.Find(UsernameSel).First().Contents().Text())
+	user.Name = strip(doc.Find(selUsername).First().Contents().Text())
 
-	LanguagesSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td a.black"
 	var langs []string
-	doc.Find(LanguagesSel).Each(func(i int, sel *goquery.Selection) {
+	doc.Find(selLanguages).Each(func(i int, sel *goquery.Selection) {
 		langs = append(langs, sel.Contents().Text())
 	})
 	user.Languages = &langs
 
-	MottoSel := "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
-	user.Motto = doc.Find(MottoSel).Last().Contents().Text()
+	user.Motto = doc.Find(selMotto).Last().Contents().Text()
 
 	return nil
 }
 
-func (wc WebClient) photos(user *User) error {
+// Photos fetch user photos
+func (wc WebClient) Photos(user *User) error {
+
+	const (
+		selPhotos = "html body table.pagew tbody tr td.pagew div.pg-lst"
+	)
 
 	photosURL := wc.url(fmt.Sprintf("/photo/%s", user.Profile))
 
@@ -178,8 +178,7 @@ func (wc WebClient) photos(user *User) error {
 		return err
 	}
 
-	PhotosSel := "html body table.pagew tbody tr td.pagew div.pg-lst"
-	doc.Find(PhotosSel).SiblingsFiltered("script").Each(func(i int, sel *goquery.Selection) {
+	doc.Find(selPhotos).SiblingsFiltered("script").Each(func(i int, sel *goquery.Selection) {
 		raw := sel.Contents().Text()
 		if strings.Contains(raw, "PS=[") {
 			raw = strings.Split(strings.Split(raw, "PS=[")[1], "]")[0]

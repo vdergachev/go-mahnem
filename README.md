@@ -33,3 +33,6 @@ Vladimir Dergachev (4dergachev@gmail.com)
 
 #### Test
 * github.com/stretchr/testify
+
+## References 
+* https://github.com/avelino/awesome-go
