@@ -29,7 +29,7 @@ func main() {
 		//nickname = "_760110"
 	)
 
-	client, err := NewWebClient()
+	client, err := NewWebClient(GetAppConfig().Site)
 	if err != nil {
 		log.Fatal("Web client init failed", err.Error())
 	}

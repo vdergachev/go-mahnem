@@ -44,7 +44,7 @@ func (wc WebClient) url(path string) string {
 }
 
 // NewWebClient creates new web client
-func NewWebClient() (MahnemClient, error) { // TODO Fix to *Mahneclientlient
+func NewWebClient(config SiteConfig) (MahnemClient, error) { // TODO Fix to *Mahneclientlient
 
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -57,8 +57,6 @@ func NewWebClient() (MahnemClient, error) { // TODO Fix to *Mahneclientlient
 		},
 		Jar: jar,
 	}
-
-	config := GetAppConfig().Site
 
 	return WebClient{
 		Config: &Configuration{
@@ -85,13 +83,13 @@ func (wc WebClient) Login() error {
 
 	response, err := wc.client.PostForm(loginURL, form)
 	if err != nil {
-		return fmt.Errorf("Login request failed: %s", err.Error())
+		return fmt.Errorf("Login failed: %s", err.Error())
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode != 302 {
-		return fmt.Errorf("Login status code is %d", response.StatusCode)
+		return fmt.Errorf("Login failed, status code: %d", response.StatusCode)
 	}
 
 	return nil
