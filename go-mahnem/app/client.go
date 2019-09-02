@@ -92,6 +92,8 @@ func (wc WebClient) Login() error {
 		return fmt.Errorf("Login failed, status code: %d", response.StatusCode)
 	}
 
+	// TODO check body
+
 	return nil
 }
 

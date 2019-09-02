@@ -13,12 +13,14 @@ import (
 func TestWebClient_Login(t *testing.T) {
 	defer gock.Off()
 
+	// Reference https://github.com/h2non/gock/blob/master/matchers_test.go
+
 	// given
 	var client = client()
 
 	gock.New("http://fake.mahnem.ru").
 		Post("/").
-		PathParam("module", "login").
+		MatchParam("module", "login").
 		Reply(200).
 		File(file("login_failed.html"))
 
