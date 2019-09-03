@@ -11,12 +11,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const (
-	loginPath           = "?module=login"
-	logoutPath          = "/?module=quit"
-	profilePathTemplate = "/web/%s"
-)
-
 // Configuration configuration
 type Configuration struct {
 	BaseURL  string
@@ -38,9 +32,32 @@ type MahnemClient interface { // TODO Check documentation how to implement inter
 	Logout() error
 }
 
-// Mahneclientlient :: url
-func (wc WebClient) url(path string) string {
-	return wc.Config.BaseURL + path // TODO use something sereous than stupid concat
+func mapOf(key, value string) map[string]string {
+	return map[string]string{key: value}
+}
+
+func (wc WebClient) url(path string, params map[string]string) string {
+
+	reqURL, err := url.ParseRequestURI(wc.Config.BaseURL)
+	if err != nil {
+		log.Printf("Can't parse base site url '%s', error '%s'\n", wc.Config.BaseURL, err.Error())
+	}
+
+	reqURL.Path = path
+
+	if params != nil {
+		reqParams := url.Values{}
+		for k, v := range params {
+			if len(k) > 0 && len(v) > 0 {
+				reqParams.Add(k, v)
+			}
+		}
+		if len(reqParams) > 0 {
+			reqURL.RawQuery = reqParams.Encode()
+		}
+	}
+
+	return reqURL.String()
 }
 
 // NewWebClient creates new web client
@@ -71,9 +88,10 @@ func NewWebClient(config SiteConfig) (MahnemClient, error) { // TODO Fix to *Mah
 // Login log in
 func (wc WebClient) Login() error {
 
-	loginURL := wc.url(loginPath)
 	login := wc.Config.Login
 	passwd := wc.Config.Password
+
+	loginURL := wc.url("/", mapOf("module", "login"))
 
 	log.Printf("Login url: %s, username: %s, password: %s\n", loginURL, login, passwd)
 
@@ -100,7 +118,7 @@ func (wc WebClient) Login() error {
 // Logout log out
 func (wc WebClient) Logout() error {
 
-	logoutURL := wc.url(logoutPath)
+	logoutURL := wc.url("/", mapOf("module", "quit"))
 
 	log.Printf("Logout url: %s\n", logoutURL)
 
@@ -130,7 +148,7 @@ func (wc WebClient) Profile(user *User) error {
 		selMotto = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
 	)
 
-	profileURL := wc.url(fmt.Sprintf(profilePathTemplate, user.Profile))
+	profileURL := wc.url(fmt.Sprintf("/web/%s", user.Profile), nil)
 
 	response, err := wc.client.Get(profileURL)
 	if err != nil {
@@ -165,7 +183,7 @@ func (wc WebClient) Photos(user *User) error {
 		selPhotos = "html body table.pagew tbody tr td.pagew div.pg-lst"
 	)
 
-	photosURL := wc.url(fmt.Sprintf("/photo/%s", user.Profile))
+	photosURL := wc.url(fmt.Sprintf("/photo/%s", user.Profile), nil)
 
 	response, err := wc.client.Get(photosURL)
 	if err != nil {

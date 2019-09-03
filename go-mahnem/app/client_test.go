@@ -8,9 +8,30 @@ import (
 	. "github.com/stretchr/testify/assert"
 )
 
-// https://github.com/h2non/gock
+func TestWebClient_url(t *testing.T) {
 
-func TestWebClient_Login(t *testing.T) {
+	// given
+	var client = client()
+
+	tests := []struct {
+		path   string
+		params map[string]string
+		want   string
+	}{
+		{"", nil, "http://fake.mahnem.ru"},
+		{"/", nil, "http://fake.mahnem.ru/"},
+		{"/", map[string]string{"": "v"}, "http://fake.mahnem.ru/"},
+		{"/", map[string]string{"k": ""}, "http://fake.mahnem.ru/"},
+		{"/", map[string]string{"k": "v"}, "http://fake.mahnem.ru/?k=v"},
+	}
+
+	// then
+	for _, tt := range tests {
+		Equal(t, client.url(tt.path, tt.params), tt.want)
+	}
+}
+
+func TestWebClient_Login(t *testing.T) { // https://github.com/h2non/gock
 	defer gock.Off()
 
 	// Reference https://github.com/h2non/gock/blob/master/matchers_test.go
@@ -33,16 +54,13 @@ func TestWebClient_Login(t *testing.T) {
 
 }
 
-func TestWebClient_Logout(t *testing.T) {
-}
+/*
+func TestWebClient_Logout(t *testing.T) {}
+func TestWebClient_Profile(t *testing.T) {}
+func TestWebClient_Photos(t *testing.T) {}
+*/
 
-func TestWebClient_Profile(t *testing.T) {
-}
-
-func TestWebClient_Photos(t *testing.T) {
-}
-
-func client() MahnemClient {
+func client() WebClient {
 
 	config := SiteConfig{
 		URL:      "http://fake.mahnem.ru",
@@ -52,7 +70,7 @@ func client() MahnemClient {
 
 	var err error
 	if client, err := NewWebClient(config); err == nil {
-		return client
+		return client.(WebClient)
 	}
 	panic(err)
 }
