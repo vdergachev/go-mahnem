@@ -24,8 +24,8 @@ func main() {
 	*/
 
 	const (
-		nickname = "_760112"
-		//nickname = "evilcat777"
+		//nickname = "_760112"
+		nickname = "evilcat777"
 		//nickname = "_760110"
 	)
 

@@ -121,10 +121,9 @@ func (wc WebClient) Logout() error {
 func (wc WebClient) Profile(user *User) error {
 
 	const (
-		selLocation  = "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
-		selUsername  = "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
-		selLanguages = "html body table.pagew tbody tr td.pagew table.t tbody tr td a.black"
-		selMotto     = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
+		selLocation = "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
+		selUsername = "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
+		selTable    = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr"
 	)
 
 	profileURL := NewEndpointBuilder(wc.Config.BaseURL).
@@ -143,16 +142,26 @@ func (wc WebClient) Profile(user *User) error {
 	}
 
 	user.Location = newLocation(doc.Find(selLocation).First().Parent().Contents().Text()) // We need parent contents
-
 	user.Name = strip(doc.Find(selUsername).First().Contents().Text())
+	/*
+		var langs []string
+		doc.Find(selLanguages).Each(func(i int, sel *goquery.Selection) {
+			langs = append(langs, sel.Contents().Text())
+		})
+		user.Languages = &langs
 
-	var langs []string
-	doc.Find(selLanguages).Each(func(i int, sel *goquery.Selection) {
-		langs = append(langs, sel.Contents().Text())
+		user.Motto = doc.Find(selMotto).Last().Contents().Text()
+	*/
+
+	table := make(map[string]string)
+	doc.Find(selTable).Each(func(i int, sel *goquery.Selection) {
+		k := sel.Find("td.grey")
+		if key := k.Contents().Text(); len(key) > 0 {
+			table[key] = k.Siblings().Contents().Text()
+		}
 	})
-	user.Languages = &langs
 
-	user.Motto = doc.Find(selMotto).Last().Contents().Text()
+	// TODO Process map
 
 	return nil
 }
