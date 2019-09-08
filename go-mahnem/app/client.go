@@ -121,13 +121,10 @@ func (wc WebClient) Logout() error {
 func (wc WebClient) Profile(user *User) error {
 
 	const (
-		selLocation = "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
-
-		selUsername = "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
-
+		selLocation  = "html body table.pagew tbody tr td.pagew table.t tbody tr td div img[src='https://img.zhivem.ru/pic_location.png']"
+		selUsername  = "html body table.pagew tbody tr td.pagew table.t tbody tr td div.header2"
 		selLanguages = "html body table.pagew tbody tr td.pagew table.t tbody tr td a.black"
-
-		selMotto = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
+		selMotto     = "html body table.pagew tbody tr td.pagew table.t tbody tr td table.t tbody tr td"
 	)
 
 	profileURL := NewEndpointBuilder(wc.Config.BaseURL).
@@ -177,19 +174,17 @@ func (wc WebClient) Photos(user *User) error {
 	}
 	defer response.Body.Close()
 
-	doc, err := goquery.NewDocumentFromReader(response.Body)
-	if err != nil {
-		return err
+	if doc, err := goquery.NewDocumentFromReader(response.Body); err == nil {
+		doc.Find(selPhotos).SiblingsFiltered("script").Each(func(i int, sel *goquery.Selection) {
+			raw := sel.Contents().Text()
+			if strings.Contains(raw, "PS=[") {
+				raw = strings.Split(strings.Split(raw, "PS=[")[1], "]")[0]
+				data := strings.Split(strings.ReplaceAll(raw, "'", ""), ",")
+				user.Photos = &data
+			}
+		})
+		return nil
 	}
 
-	doc.Find(selPhotos).SiblingsFiltered("script").Each(func(i int, sel *goquery.Selection) {
-		raw := sel.Contents().Text()
-		if strings.Contains(raw, "PS=[") {
-			raw = strings.Split(strings.Split(raw, "PS=[")[1], "]")[0]
-			data := strings.Split(strings.ReplaceAll(raw, "'", ""), ",")
-			user.Photos = &data
-		}
-	})
-
-	return nil
+	return err
 }
