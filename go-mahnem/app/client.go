@@ -143,25 +143,22 @@ func (wc WebClient) Profile(user *User) error {
 
 	user.Location = newLocation(doc.Find(selLocation).First().Parent().Contents().Text()) // We need parent contents
 	user.Name = strip(doc.Find(selUsername).First().Contents().Text())
-	/*
-		var langs []string
-		doc.Find(selLanguages).Each(func(i int, sel *goquery.Selection) {
-			langs = append(langs, sel.Contents().Text())
-		})
-		user.Languages = &langs
-
-		user.Motto = doc.Find(selMotto).Last().Contents().Text()
-	*/
 
 	table := make(map[string]string)
 	doc.Find(selTable).Each(func(i int, sel *goquery.Selection) {
-		k := sel.Find("td.grey")
-		if key := k.Contents().Text(); len(key) > 0 {
-			table[key] = k.Siblings().Contents().Text()
+		caption := sel.Find("td.grey")
+		if key := caption.Contents().Text(); len(key) > 0 {
+			table[key] = caption.Siblings().Contents().Text()
 		}
 	})
 
-	// TODO Process map
+	langs := table["Владею языками:"]
+	if len(langs) > 0 {
+		langs := Map(strings.Split(strings.Split(langs, "·")[0], ","), strip)
+		user.Languages = &langs
+	}
+
+	user.Motto = strip(table["Мой девиз:"])
 
 	return nil
 }
