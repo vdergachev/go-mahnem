@@ -11,11 +11,20 @@ import (
 var replacer *strings.Replacer
 
 func init() {
-	replacer = strings.NewReplacer("\r", "", "\n", "", "\t", "", " ", "")
+	replacer = strings.NewReplacer("\r", "", "\n", "", "\t", "")
 }
 
 func strip(val string) string {
-	return replacer.Replace(val)
+	return replacer.Replace(strings.TrimSpace(val))
+}
+
+// Map is map
+func Map(vs []string, f func(string) string) []string {
+	vsm := make([]string, len(vs))
+	for i, v := range vs {
+		vsm[i] = f(v)
+	}
+	return vsm
 }
 
 // Sometimes is very usefull to have ability dump response to the file

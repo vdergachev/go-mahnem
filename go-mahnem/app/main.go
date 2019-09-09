@@ -29,25 +29,25 @@ func main() {
 		//nickname = "_760110"
 	)
 
-	client, err := NewWebClient()
+	client, err := NewWebClient(GetAppConfig().Site)
 	if err != nil {
 		log.Fatal("Web client init failed", err.Error())
 	}
 
-	err = client.login()
+	err = client.Login()
 	if err != nil {
 		log.Fatal("Login failed", err.Error())
 	}
-	defer client.logout()
+	defer client.Logout()
 
 	var user = &User{Profile: nickname}
 
-	err = client.profile(user)
+	err = client.Profile(user)
 	if err != nil {
 		log.Fatal("Profile fetch failed, error ", err.Error())
 	}
 
-	err = client.photos(user)
+	err = client.Photos(user)
 	if err != nil {
 		log.Fatal("Photos fetch failed, error ", err.Error())
 	}

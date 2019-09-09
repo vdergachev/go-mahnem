@@ -5,9 +5,13 @@ My first golang project, simple web cwawler of mahnem.ru with rest API and nice 
 
 ## TODO
 
-- Add fetch strategies (base on dictionary, on int ranges and on built in  search)
+- Add fetch strategies 
+    1. Base on dictionary
+    2. Int ranges
+    3. Built in search
+    4. Scan existing prifiles for updates
 - Add service using strategies
-- Cover by tests (fetch html pages, db queries, service logic)
+- Cover by tests (fetch html pages, db queries, service)
 
 - Add Rest API to drive fetch process
 - Add UI to manage fetch process
@@ -29,3 +33,6 @@ Vladimir Dergachev (4dergachev@gmail.com)
 
 #### Test
 * github.com/stretchr/testify
+
+## References 
+* https://github.com/avelino/awesome-go

@@ -1,0 +1,28 @@
+db:
+    url:      "localhost"
+    port:     5432
+    database: "goma"
+    username: "postgres"
+    password: "admin"
+    maxconnections: 100
+    acquirerimeout: 3000
+
+site:
+    url:       "http://mahnem.ru/"
+    login:     "ADD_YOUR_LOGIN"
+    password:  "AND_YOUR_PASSWD"
+
+# site: 
+#     url:           "http://mahnem.ru/"
+#     
+#     login:
+#         path:       "?module=login"
+#         form:    
+#             logon:  "ADD_YOUR_LOGIN"
+#             pwd:    "AND_YOUR_PASSWD"
+#     
+#     logout:
+#         path:       "/?module=quit"
+# 
+#     profile:
+#         path:       "/web/%s"    
