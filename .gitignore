@@ -1,3 +1,6 @@
+**/**/*.exe
+**/*.exe
+*.exe
 .vscode
 result/**
 __debug_bin

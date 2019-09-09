@@ -91,8 +91,9 @@ func (rep Repository) fetch(sb sq.SelectBuilder) uint64 {
 		defer rep.Release(connection)
 		sql, args, _ := sb.ToSql()
 
+		var count uint64
 		if row := connection.QueryRow(sql, args...); row != nil {
-			var count uint64
+			
 			row.Scan(&count)
 			return count
 		}
