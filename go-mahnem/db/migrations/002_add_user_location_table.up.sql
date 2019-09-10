@@ -1,3 +1,4 @@
+BEGIN;
 
 CREATE TABLE IF NOT EXISTS user_location (
     user_location_id SERIAL PRIMARY KEY,
@@ -5,4 +6,6 @@ CREATE TABLE IF NOT EXISTS user_location (
     city VARCHAR (50) NOT NULL
 );
 
--- add GRANT ...
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_location TO backend;
+
+COMMIT;

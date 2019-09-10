@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS user_photo (
     user_photo_id SERIAL PRIMARY KEY,
     user_profile_id INT NOT NULL,
@@ -8,5 +10,8 @@ CREATE TABLE IF NOT EXISTS user_photo (
 CREATE UNIQUE INDEX ux_user_photo
     ON user_photo (user_profile_id, url);
 
--- add GRANT ...
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_photo TO backend;
+
+COMMIT;
 

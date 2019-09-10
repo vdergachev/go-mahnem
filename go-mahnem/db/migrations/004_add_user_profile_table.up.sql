@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS user_profile (
     user_profile_id SERIAL PRIMARY KEY,
     user_login VARCHAR (50) UNIQUE NOT NULL,
@@ -6,4 +8,6 @@ CREATE TABLE IF NOT EXISTS user_profile (
     motto TEXT
 );
 
--- add GRANT ...
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_profile TO backend;
+
+COMMIT;

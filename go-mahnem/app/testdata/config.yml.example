@@ -2,8 +2,8 @@ db:
     url:      "localhost"
     port:     5432
     database: "goma"
-    username: "postgres"
-    password: "admin"
+    username: "backend"
+    password: "backend"
     maxconnections: 100
     acquirerimeout: 3000
 
