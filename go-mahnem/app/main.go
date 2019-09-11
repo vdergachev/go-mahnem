@@ -25,8 +25,8 @@ func main() {
 
 	const (
 		//nickname = "_760112"
-		nickname = "evilcat777"
-		//nickname = "_760110"
+		//nickname = "evilcat777"
+		nickname = "_760110"
 	)
 
 	client, err := NewWebClient(GetAppConfig().Site)
