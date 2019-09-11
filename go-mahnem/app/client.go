@@ -152,13 +152,14 @@ func (wc WebClient) Profile(user *User) error {
 		}
 	})
 
-	langs := table["Владею языками:"]
-	if len(langs) > 0 {
+	if langs := table["Владею языками:"]; len(langs) > 0 {
 		langs := Map(strings.Split(strings.Split(langs, "·")[0], ","), strip)
 		user.Languages = &langs
 	}
 
 	user.Motto = strip(table["Мой девиз:"])
+
+	user.Instagram = strip(table["Instagram:"])
 
 	return nil
 }
