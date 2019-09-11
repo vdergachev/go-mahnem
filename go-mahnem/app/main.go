@@ -24,8 +24,8 @@ func main() {
 	*/
 
 	const (
-		nickname = "_760112"
-		//nickname = "evilcat777"
+		//nickname = "_760112"
+		nickname = "evilcat777"
 		//nickname = "_760110"
 	)
 
@@ -61,7 +61,7 @@ func main() {
 	// TODO Add userId to User struct
 	var userID uint64
 	if userID = rep.FindUserByLogin(user.Profile); userID == 0 {
-		userID = rep.StoreUser(user.Profile, user.Name, locationID, user.Motto)
+		userID = rep.StoreUser(user.Profile, user.Name, locationID, user.Motto, user.Instagram)
 	}
 
 	// TODO Add langId to Languages struct

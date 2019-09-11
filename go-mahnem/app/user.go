@@ -17,6 +17,7 @@ type User struct {
 	Location  *Location
 	Languages *[]string
 	Motto     string
+	Instagram string
 	Photos    *[]string
 }
 

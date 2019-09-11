@@ -93,7 +93,7 @@ func (rep Repository) fetch(sb sq.SelectBuilder) uint64 {
 
 		var count uint64
 		if row := connection.QueryRow(sql, args...); row != nil {
-			
+
 			row.Scan(&count)
 			return count
 		}
@@ -162,7 +162,7 @@ func (rep Repository) CountUserPhotos() uint64 {
 // Store...
 
 // StoreUser save user profile to database
-func (rep Repository) StoreUser(login string, name string, locationID uint64, motto string) uint64 {
+func (rep Repository) StoreUser(login string, name string, locationID uint64, motto string, instagram string) uint64 {
 
 	query := psql().Insert(
 		"user_profile",
@@ -171,11 +171,15 @@ func (rep Repository) StoreUser(login string, name string, locationID uint64, mo
 		"user_name",
 		"user_location_id",
 		"motto",
+		"instagram_login",
+		"created_date",
 	).Values(
 		login,
 		name,
 		locationID,
 		motto,
+		instagram,
+		time.Now(),
 	).Suffix("RETURNING user_profile_id")
 
 	return rep.insert(query)
