@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS user_profile (
     user_name VARCHAR (60) NOT NULL,
     user_location_id INT REFERENCES user_location (user_location_id),
     motto TEXT,
-    instagram_url TEXT,
+    instagram_login TEXT,
     created_date TIMESTAMP NOT NULL,
     last_updated_date TIMESTAMP NOT NULL DEFAULT now()
 );

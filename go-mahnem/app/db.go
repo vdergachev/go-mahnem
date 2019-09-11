@@ -171,7 +171,7 @@ func (rep Repository) StoreUser(login string, name string, locationID uint64, mo
 		"user_name",
 		"user_location_id",
 		"motto",
-		"instagram_url",
+		"instagram_login",
 		"created_date",
 	).Values(
 		login,
